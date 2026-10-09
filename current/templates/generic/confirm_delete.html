@@ -1,0 +1,12 @@
+{% extends 'base.html' %}{% block title %}{{title}} | کارما{% endblock %}{% block content %}
+<div class="danger-confirm panel mx-auto" style="max-width:720px">
+  <div class="danger-icon"><i class="fa-solid fa-triangle-exclamation"></i></div>
+  <h1>{{title}}</h1>
+  <p>آیا از حذف/بایگانی «<strong>{{object_name}}</strong>» مطمئن هستید؟</p>
+  {% if warning %}<div class="alert alert-warning">{{warning}}</div>{% endif %}
+  <div class="d-flex gap-2 justify-content-center mt-4">
+    <a class="btn btn-light" href="{{cancel_url}}">انصراف</a>
+    <form method="post">{% csrf_token %}<button class="btn btn-danger"><i class="fa-solid fa-trash"></i> تأیید حذف</button></form>
+  </div>
+</div>
+{% endblock %}

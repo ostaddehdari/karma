@@ -1,0 +1,27 @@
+
+# Server runtime/data exclusions
+.env
+.env.*
+!.env.example
+!.env.sample
+node_modules/
+.venv/
+venv/
+__pycache__/
+.next/
+dist/
+build/
+media/
+uploads/
+data/
+backups/
+logs/
+*.log
+*.sqlite*
+*.db
+*.dump
+*.sql
+*.session*
+*.pem
+*.key
+*.p12

@@ -1,0 +1,8 @@
+{% extends 'base.html' %}{% load karma_fa %}{% block title %}{{ title }} | کارما{% endblock %}
+{% block content %}
+<div class="page-head"><div><span class="eyebrow"><a href="{% url 'user_management' %}">مدیریت کاربران</a></span><h1>{{ title }}</h1><p>شماره موبایل، شناسه یکتای کاربر در کارما است.</p></div></div>
+<div class="panel form-panel user-form-panel">
+  <div class="password-hint mb-3"><span><i class="fa-solid fa-key"></i></span><div><strong>رمز پیش‌فرض کاربران: {{ default_password|fa_num }}</strong><small>مدیر می‌تواند همین‌جا یا از فهرست کاربران رمز را تغییر دهد.</small></div></div>
+  <form method="post" novalidate>{% csrf_token %}{{ form.as_p }}<div class="d-flex gap-2 mt-4"><button class="btn btn-primary px-4"><i class="fa-solid fa-floppy-disk ms-1"></i>{{ submit_label }}</button><a class="btn btn-light" href="{% url 'user_management' %}">انصراف</a></div></form>
+</div>
+{% endblock %}

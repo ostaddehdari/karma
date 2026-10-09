@@ -1,0 +1,26 @@
+[Unit]
+Description=KARMA Django Gunicorn
+After=network.target postgresql.service
+Wants=postgresql.service
+
+[Service]
+Type=simple
+User=www-data
+Group=www-data
+WorkingDirectory=/var/www/karma/current
+EnvironmentFile=/var/www/karma/current/.env
+RuntimeDirectory=karma
+RuntimeDirectoryMode=0755
+ExecStart=/var/www/karma/current/.venv/bin/gunicorn config.wsgi:application \
+    --bind unix:/run/karma/karma.sock \
+    --workers 3 \
+    --timeout 120 \
+    --access-logfile - \
+    --error-logfile -
+Restart=always
+RestartSec=3
+PrivateTmp=true
+NoNewPrivileges=true
+
+[Install]
+WantedBy=multi-user.target

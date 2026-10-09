@@ -1,0 +1,5 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="page-head"><div><div class="eyebrow"><a href="{% url 'notes' %}?book={{notebook.pk}}&section={{section.pk}}">{{notebook.title}} / {{section.title}}</a></div><h1>{{title}}</h1><p>متن، فایل، تصویر، فیلم، صوت و چک‌لیست را بعد از ساخت صفحه می‌توانید در همان صفحه اضافه کنید.</p></div></div>
+<div class="panel form-panel"><form method="post">{% csrf_token %}{{form.as_p}}<button class="btn btn-primary"><i class="fa-solid fa-check"></i> ساخت صفحه</button></form></div>
+{% endblock %}

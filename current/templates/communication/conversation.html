@@ -1,0 +1,88 @@
+{% extends 'base.html' %}
+{% load static karma_fa %}
+{% block title %}{{conversation.title}} | کارما{% endblock %}
+{% block content %}
+<div class="telegram-shell">
+  <aside class="telegram-sidebar panel p-0">
+    <div class="tg-side-head">
+      <a class="tg-back" href="{% url 'chat_center' %}" title="همه گفتگوها"><i class="fa-solid fa-arrow-right"></i></a>
+      <div><strong>{{conversation.project.name}}</strong><small>{{conversation.project.workspace.name}}</small></div>
+    </div>
+    <div class="tg-chat-list">
+      {% for c in sibling_conversations %}
+      <a href="{% url 'conversation' c.pk %}" class="tg-chat-link {% if c.pk == conversation.pk %}active{% endif %}">
+        <span class="tg-avatar {% if c.kind == 'documents' %}docs{% endif %}"><i class="{% if c.kind == 'documents' %}fa-solid fa-folder-open{% else %}fa-solid fa-users{% endif %}"></i></span>
+        <span><strong>{{c.title}}</strong><small>{{c.get_kind_display}}</small></span>
+      </a>
+      {% endfor %}
+      {% if private_conversations %}<div class="tg-section-label">گفتگوهای خصوصی</div>{% endif %}
+      {% for c in private_conversations %}
+      <a href="{% url 'conversation' c.pk %}" class="tg-chat-link {% if c.pk == conversation.pk %}active{% endif %}">
+        <span class="tg-avatar private"><i class="fa-solid fa-user"></i></span><span><strong>{{c.title}}</strong><small>خصوصی در همین پروژه</small></span>
+      </a>
+      {% endfor %}
+    </div>
+  </aside>
+
+  <section class="telegram-chat panel p-0">
+    <header class="tg-header">
+      <div class="tg-head-avatar {% if conversation.kind == 'documents' %}docs{% endif %}"><i class="{% if conversation.kind == 'documents' %}fa-solid fa-folder-open{% elif conversation.kind == 'private' %}fa-solid fa-user{% else %}fa-solid fa-users{% endif %}"></i></div>
+      <div class="tg-head-title">
+        <h2>{{conversation.title}}</h2>
+        <small>{% if conversation.kind == 'documents' %}ارسال و آرشیو مستندات پروژه{% elif conversation.kind == 'follow_up' %}پیگیری و هماهنگی پروژه{% elif conversation.kind == 'private' %}گفتگوی خصوصی در {{conversation.project.name}}{% else %}گفتگوی گروهی{% endif %}</small>
+      </div>
+      <div class="tg-head-actions">
+        <a href="{% url 'project_detail' conversation.project.pk %}" title="پروژه"><i class="fa-solid fa-diagram-project"></i></a>
+        <a href="{% url 'documents' conversation.project.pk %}" title="مستندات"><i class="fa-solid fa-paperclip"></i></a>
+      </div>
+    </header>
+
+    <div class="tg-messages" id="messages">
+      {% for m in messages_list %}
+        {% ifchanged m.created_at|jalali_date %}<div class="tg-date-separator"><span>{{m.created_at|jalali_date}}</span></div>{% endifchanged %}
+        <div class="tg-message {% if m.sender_id == user.id %}mine{% endif %}">
+          <div class="tg-bubble">
+            {% if m.sender_id != user.id %}<div class="tg-sender">{% if m.sender %}{{m.sender.profile.display_name|default:m.sender.username}}{% else %}کاربر حذف‌شده{% endif %}</div>{% endif %}
+            {% if m.text %}<div class="tg-text">{{m.text|linebreaksbr}}</div>{% endif %}
+            {% if m.attachments.all %}<div class="tg-attachments">
+              {% for a in m.attachments.all %}
+                {% if a.media_type == 'image' %}
+                  <a class="tg-media" href="{% url 'message_attachment_download' a.pk %}" target="_blank"><img src="{% url 'message_attachment_download' a.pk %}" alt="{{a.original_name}}"></a>
+                {% elif a.media_type == 'video' %}
+                  <video class="tg-video" controls preload="metadata" src="{% url 'message_attachment_download' a.pk %}"></video>
+                {% elif a.media_type == 'audio' %}
+                  <div class="tg-audio"><span class="tg-audio-icon"><i class="fa-solid {% if a.is_voice_recording %}fa-microphone-lines{% else %}fa-music{% endif %}"></i></span><audio controls preload="metadata" src="{% url 'message_attachment_download' a.pk %}"></audio></div>
+                {% else %}
+                  <a class="tg-file" href="{% url 'message_attachment_download' a.pk %}" target="_blank"><span class="tg-file-icon"><i class="fa-solid fa-file-arrow-down"></i></span><span><strong>{{a.original_name}}</strong><small>برای دریافت فایل بزنید</small></span></a>
+                {% endif %}
+              {% endfor %}
+            </div>{% endif %}
+            <div class="tg-meta"><span>{{m.created_at|date:'H:i'|fa_num}}{% if m.edited_at %} · ویرایش‌شده{% endif %}</span>{% if m.sender_id == user.id %}<span class="tg-message-actions"><a href="{% url 'message_edit' m.pk %}" title="ویرایش"><i class="fa-solid fa-pen"></i></a><form method="post" action="{% url 'message_delete' m.pk %}" onsubmit="return confirm('پیام حذف شود؟')">{% csrf_token %}<button title="حذف"><i class="fa-solid fa-trash"></i></button></form></span><i class="fa-solid fa-check-double"></i>{% endif %}</div>
+          </div>
+        </div>
+      {% empty %}
+        <div class="tg-empty"><i class="fa-regular fa-comments"></i><strong>گفتگو را شروع کنید</strong><span>پیام، عکس، فیلم، فایل یا پیام صوتی بفرستید.</span></div>
+      {% endfor %}
+    </div>
+
+    <div class="tg-upload-preview" id="uploadPreview" hidden></div>
+    <form method="post" enctype="multipart/form-data" class="tg-composer" id="chatComposer">{% csrf_token %}
+      <label class="tg-round-btn tg-attach" title="پیوست فایل"><i class="fa-solid fa-paperclip"></i>{{form.attachments}}</label>
+      <div class="tg-text-wrap">{{form.text}}</div>
+      <button type="button" class="tg-round-btn tg-voice" id="voiceBtn" title="ضبط پیام صوتی"><i class="fa-solid fa-microphone"></i></button>
+      <button class="tg-round-btn tg-send" id="sendBtn" title="ارسال"><i class="fa-solid fa-paper-plane"></i></button>
+    </form>
+    <div class="tg-voice-status" id="voiceStatus"></div>
+    {% if form.errors %}<div class="px-3 pb-2 text-danger small">{{form.errors}}</div>{% endif %}
+  </section>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+window.KARMA_CHAT_URL=window.location.href;
+window.KARMA_VOICE_URL='{% url "voice_upload" conversation.pk %}';
+window.KARMA_CSRF='{{csrf_token}}';
+</script>
+<script src="{% static 'js/chat.js' %}"></script>
+<script src="{% static 'js/voice.js' %}"></script>
+{% endblock %}

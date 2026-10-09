@@ -1,0 +1,11 @@
+[Unit]
+Description=KARMA encrypted-host backup job
+
+[Service]
+Type=oneshot
+User=www-data
+Group=www-data
+ExecStart=/var/www/karma/current/scripts/backup.sh
+Environment=KARMA_BACKUP_DIR=/var/backups/karma
+PrivateTmp=true
+NoNewPrivileges=true

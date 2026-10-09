@@ -1,0 +1,31 @@
+from django.urls import path
+from . import views
+
+urlpatterns = [
+    path('workspace/<int:workspace_id>/new/', views.project_create, name='project_create'),
+    path('workspace/<int:workspace_id>/quick-new/', views.project_quick_create, name='project_quick_create'),
+    path('workspace/<int:workspace_id>/import/', views.project_import, name='project_import'),
+    path('<int:pk>/', views.project_detail, name='project_detail'),
+    path('<int:pk>/edit/', views.project_edit, name='project_edit'),
+    path('<int:pk>/delete/', views.project_delete, name='project_delete'),
+    path('<int:pk>/export/', views.project_export, name='project_export'),
+    path('<int:pk>/members/', views.project_members, name='project_members'),
+    path('<int:pk>/board/', views.board, name='project_board'),
+    path('<int:pk>/lists/new/', views.task_list_create, name='task_list_create'),
+    path('lists/<int:list_id>/edit/', views.task_list_edit, name='task_list_edit'),
+    path('lists/<int:list_id>/delete/', views.task_list_delete, name='task_list_delete'),
+    path('<int:pk>/tasks/new/', views.task_create, name='task_create'),
+    path('<int:pk>/tasks/quick-new/', views.task_quick_create, name='task_quick_create'),
+    path('tasks/<int:task_id>/', views.task_detail, name='task_detail'),
+    path('tasks/<int:task_id>/edit/', views.task_edit, name='task_edit'),
+    path('tasks/<int:task_id>/delete/', views.task_delete, name='task_delete'),
+    path('tasks/<int:task_id>/status/', views.task_status, name='task_status'),
+    path('tasks/<int:task_id>/complete-toggle/', views.task_complete_toggle, name='task_complete_toggle'),
+    path('checklist/<int:item_id>/toggle/', views.checklist_toggle, name='checklist_toggle'),
+    path('checklist/<int:item_id>/edit/', views.checklist_edit, name='checklist_edit'),
+    path('checklist/<int:item_id>/delete/', views.checklist_delete, name='checklist_delete'),
+    path('<int:pk>/milestones/new/', views.milestone_create, name='milestone_create'),
+    path('milestones/<int:milestone_id>/edit/', views.milestone_edit, name='milestone_edit'),
+    path('milestones/<int:milestone_id>/toggle/', views.milestone_toggle, name='milestone_toggle'),
+    path('milestones/<int:milestone_id>/delete/', views.milestone_delete, name='milestone_delete'),
+]

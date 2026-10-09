@@ -1,0 +1,103 @@
+{% extends 'base.html' %}{% load karma_fa %}{% block title %}{{project.name}} | کارما{% endblock %}{% block content %}
+<div class="project-hero project-hero-v3 p{{project.priority}}">
+  <div class="project-hero-copy">
+    <div class="eyebrow"><a href="{% url 'workspace_detail' project.workspace.pk %}"><i class="fa-solid fa-layer-group"></i> {{project.workspace.name}}</a></div>
+    <div class="d-flex align-items-center gap-2 flex-wrap"><h1 class="mb-0">{{project.name}}</h1><span class="project-health health-{{progress_stats.health_class}}"><i class="fa-solid {{progress_stats.health_icon}}"></i> {{progress_stats.health}}</span></div>
+    <p class="mt-2">{{project.description|default:'توضیحی برای پروژه ثبت نشده است.'}}</p>
+    <div class="d-flex flex-wrap gap-2 mt-3">
+      <span class="priority priority-{{project.priority}}">{{project.get_priority_display}}</span>
+      <span class="status-pill status-{{project.status}}">{{project.get_status_display}}</span>
+      {% if project.code %}<span class="badge-soft"><i class="fa-solid fa-hashtag"></i> {{project.code}}</span>{% endif %}
+      {% if project.due_date %}<span class="badge-soft"><i class="fa-regular fa-calendar"></i> {{project.due_date|jalali_date}}</span>{% endif %}
+      <span class="badge-soft progress-source-badge"><i class="fa-solid fa-calculator"></i> پیشرفت خودکار از کارها و چک‌لیست‌ها</span>
+    </div>
+  </div>
+  <div class="project-hero-side progress-hero-side">
+    <div class="project-progress-v3" style="--progress:{{project.progress_cache}}">
+      <div class="progress-ring-inner"><strong>{{project.progress_cache|fa_num}}٪</strong><small>{{progress_stats.stage}}</small></div>
+    </div>
+    <div class="project-actions-v2">
+      {% if can_manage_project %}<a class="mini-action light" href="{% url 'project_edit' project.pk %}" title="ویرایش"><i class="fa-solid fa-pen"></i></a>{% endif %}
+      <a class="mini-action light" href="{% url 'project_export' project.pk %}" title="خروجی"><i class="fa-solid fa-file-export"></i></a>
+      {% if can_manage_project %}<a class="mini-action danger-light" href="{% url 'project_delete' project.pk %}" title="حذف"><i class="fa-solid fa-trash"></i></a>{% endif %}
+    </div>
+  </div>
+</div>
+
+<div class="quick-task-bar-v2">
+  <button data-bs-toggle="modal" data-bs-target="#quickTask" class="quick-tile purple"><span><i class="fa-solid fa-plus"></i></span><div><strong>وظیفه سریع</strong><small>در چند ثانیه</small></div></button>
+  <a href="{% url 'task_create' project.pk %}" class="quick-tile blue"><span><i class="fa-solid fa-list-check"></i></span><div><strong>وظیفه کامل</strong><small>جزئیات و مسئول</small></div></a>
+  <a href="{% url 'project_board' project.pk %}" class="quick-tile cyan"><span><i class="fa-solid fa-table-columns"></i></span><div><strong>بورد کانبان</strong><small>جابجایی وضعیت</small></div></a>
+  <a href="{% url 'task_list_create' project.pk %}" class="quick-tile amber"><span><i class="fa-solid fa-bars-staggered"></i></span><div><strong>فهرست جدید</strong><small>دسته‌بندی کارها</small></div></a>
+  {% if active_timer %}<form method="post" action="{% url 'timer_stop' active_timer.pk %}" class="m-0 quick-timer-form">{% csrf_token %}<input type="hidden" name="next" value="{{request.get_full_path}}"><button class="quick-tile red"><span class="timer-pulse"></span><div><strong>اتمام تایمر</strong><small>{{active_timer.project.name}}</small></div></button></form>{% else %}<button data-bs-toggle="modal" data-bs-target="#startTimer" class="quick-tile green"><span><i class="fa-solid fa-play"></i></span><div><strong>شروع تایمر</strong><small>ثبت زمان واقعی</small></div></button>{% endif %}
+  <a href="{% url 'worklog_manual_add' project.pk %}?next={{request.get_full_path|urlencode}}" class="quick-tile pink"><span><i class="fa-regular fa-clock"></i></span><div><strong>ثبت ساعت</strong><small>تاریخ شمسی + زمان</small></div></a>
+</div>
+
+<section class="progress-command-center">
+  <div class="progress-command-main">
+    <div class="progress-command-heading">
+      <div><span class="progress-kicker"><i class="fa-solid fa-chart-line"></i> مرکز پیشرفت پروژه</span><h2>{{progress_stats.stage}}</h2><p>این درصد به‌صورت زنده از تکمیل وظایف، آیتم‌های چک‌لیست و درصد دستی وظایف بدون چک‌لیست محاسبه می‌شود.</p></div>
+      <div class="progress-big-number">{{progress_stats.overall|fa_num}}<span>٪</span></div>
+    </div>
+    <div class="smart-progress-track" style="--progress:{{progress_stats.overall}}"><div class="smart-progress-fill"></div><span class="mark m0">۰</span><span class="mark m25">۲۵</span><span class="mark m50">۵۰</span><span class="mark m75">۷۵</span><span class="mark m100">۱۰۰</span></div>
+    <div class="status-distribution">
+      {% for segment in progress_stats.status_segments %}
+        {% if segment.count %}<div class="status-segment seg-{{segment.key}}" style="width:{{segment.percent}}%" title="{{segment.label}}: {{segment.count}}"></div>{% endif %}
+      {% endfor %}
+    </div>
+    <div class="status-legend">
+      {% for segment in progress_stats.status_segments %}<span><i class="legend-dot seg-{{segment.key}}"></i>{{segment.label}} <b>{{segment.count|fa_num}}</b></span>{% endfor %}
+    </div>
+  </div>
+  <div class="progress-kpi-grid">
+    <div class="progress-kpi kpi-green"><span class="kpi-icon"><i class="fa-solid fa-circle-check"></i></span><div><strong>{{progress_stats.completed_tasks|fa_num}} / {{progress_stats.total_tasks|fa_num}}</strong><small>وظیفه تکمیل‌شده</small><div class="mini-smart"><i style="width:{{progress_stats.task_completion_percent}}%"></i></div></div></div>
+    <div class="progress-kpi kpi-purple"><span class="kpi-icon"><i class="fa-solid fa-list-check"></i></span><div><strong>{{progress_stats.checklist_done|fa_num}} / {{progress_stats.checklist_total|fa_num}}</strong><small>آیتم چک‌لیست تکمیل‌شده</small><div class="mini-smart"><i style="width:{{progress_stats.checklist_percent}}%"></i></div></div></div>
+    <div class="progress-kpi kpi-orange"><span class="kpi-icon"><i class="fa-solid fa-hourglass-half"></i></span><div><strong>{{progress_stats.started_tasks|fa_num}}</strong><small>کار در حال پیشرفت</small>{% if progress_stats.ready_tasks %}<em>{{progress_stats.ready_tasks|fa_num}} کار آماده تکمیل است</em>{% endif %}</div></div>
+    <div class="progress-kpi {% if progress_stats.overdue_tasks %}kpi-red{% else %}kpi-blue{% endif %}"><span class="kpi-icon"><i class="fa-solid {% if progress_stats.overdue_tasks %}fa-triangle-exclamation{% else %}fa-calendar-check{% endif %}"></i></span><div><strong>{{progress_stats.overdue_tasks|fa_num}}</strong><small>کار عقب‌افتاده</small>{% if progress_stats.due_soon_tasks %}<em>{{progress_stats.due_soon_tasks|fa_num}} موعد در ۳ روز آینده</em>{% endif %}</div></div>
+  </div>
+</section>
+
+<section class="project-time-center" id="work-time">
+  <div class="project-time-main">
+    <div class="project-time-icon"><i class="fa-solid fa-stopwatch"></i></div>
+    <div><span class="progress-kicker">زمان صرف‌شده روی پروژه</span><h2>{{project_time_month.total_human}}</h2><p>مجموع ساعت‌های ثبت‌شده تیم در ماه جاری شمسی. سهم شما: <strong>{{my_time_month.total_human}}</strong></p></div>
+    <div class="project-time-actions">{% if active_timer %}<form method="post" action="{% url 'timer_stop' active_timer.pk %}">{% csrf_token %}<input type="hidden" name="next" value="{{request.get_full_path}}"><button class="btn btn-danger"><i class="fa-solid fa-stop"></i> اتمام تایمر</button></form>{% else %}<button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#startTimer"><i class="fa-solid fa-play"></i> شروع</button>{% endif %}<a class="btn btn-light" href="{% url 'worklog_manual_add' project.pk %}?next={{request.get_full_path|urlencode}}"><i class="fa-regular fa-calendar-plus"></i> ثبت دستی</a><a class="btn btn-light" href="{% url 'time_report' %}?workspace={{project.workspace_id}}&project={{project.pk}}"><i class="fa-solid fa-chart-column"></i> گزارش ماهانه</a></div>
+  </div>
+  <div class="project-time-recent">{% for l in recent_work_logs %}<div><span class="avatar tiny">{{l.member.name|slice:':1'}}</span><div><strong>{{l.member.name}}</strong><small>{% if l.task %}{{l.task.title}} · {% endif %}{{l.started_at|jalali_datetime}}</small></div><b>{% if l.is_running %}<span class="text-success">در حال کار</span>{% else %}{{l|work_duration}}{% endif %}</b></div>{% empty %}<small class="text-muted">هنوز ساعت کاری برای این پروژه ثبت نشده است.</small>{% endfor %}</div>
+</section>
+
+<nav class="project-nav colorful-nav"><a class="active" href="#tasks"><i class="fa-solid fa-list-check"></i> کارها</a><a href="#work-time"><i class="fa-solid fa-stopwatch"></i> ساعات کاری</a><a href="{% url 'project_board' project.pk %}"><i class="fa-solid fa-table-columns"></i> بورد</a><a href="{% url 'project_members' project.pk %}"><i class="fa-solid fa-users"></i> اعضا</a><a href="{% url 'documents' project.pk %}"><i class="fa-solid fa-folder-open"></i> مستندات</a><a href="{% url 'letters' project.pk %}"><i class="fa-solid fa-envelope-open-text"></i> نامه‌ها</a>{% for c in project_conversations %}{% if c.kind == 'follow_up' %}<a href="{% url 'conversation' c.pk %}"><i class="fa-solid fa-comments"></i> چت پیگیری</a>{% elif c.kind == 'documents' %}<a href="{% url 'conversation' c.pk %}"><i class="fa-solid fa-paperclip"></i> چت مستندات</a>{% endif %}{% endfor %}</nav>
+
+<div class="project-layout-v2" id="tasks">
+<section class="project-main-column">
+  <div class="panel colorful-panel purple-panel">
+    <div class="panel-head"><div><h3><i class="fa-solid fa-list-check text-primary"></i> وظایف پروژه</h3><small class="text-muted">هر تیک چک‌لیست، درصد همین وظیفه و کل پروژه را تغییر می‌دهد.</small></div><button class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#quickTask"><i class="fa-solid fa-plus"></i> وظیفه</button></div>
+    <div class="task-table-v3">
+      {% for t in tasks %}
+      <div class="task-line-v3 {% if t.status == 'done' %}is-done{% endif %}">
+        <span class="task-priority-dot p{{t.priority}}"></span>
+        <a class="task-line-main" href="{% url 'task_detail' t.pk %}"><strong>{{t.title}}</strong><small>{% if t.task_list %}{{t.task_list.title}} · {% endif %}{{t.assignee.name|default:'بدون مسئول'}}{% if t.due_date %} · {{t.due_date|jalali_date}}{% endif %}</small></a>
+        <div class="task-progress-inline"><div class="task-progress-track"><i style="width:{{t.effective_progress}}%"></i></div><b>{{t.effective_progress|fa_num}}٪</b>{% if t.checklist_total_count %}<small>{{t.checklist_done_count|fa_num}}/{{t.checklist_total_count|fa_num}} چک</small>{% endif %}</div>
+        <span class="status-pill status-{{t.status}}">{{t.get_status_display}}</span>
+        {% if t.status == 'done' and not can_review_project %}<span class="task-approved-badge"><i class="fa-solid fa-shield-check"></i> تأییدشده</span>{% else %}<form method="post" action="{% url 'task_complete_toggle' t.pk %}" class="task-complete-form">{% csrf_token %}<input type="hidden" name="return_to" value="project"><button class="task-complete-btn {% if t.status == 'done' %}done{% endif %}" title="{% if t.status == 'done' %}برگشت برای اصلاح{% else %}تکمیل شد{% endif %}"><i class="fa-solid {% if t.status == 'done' %}fa-rotate-left{% else %}fa-check{% endif %}"></i><span>{% if t.status == 'done' %}برگشت برای اصلاح{% else %}تکمیل شد{% endif %}</span></button></form>{% endif %}
+        <div class="row-actions"><a class="mini-action" href="{% url 'task_edit' t.pk %}" title="ویرایش"><i class="fa-solid fa-pen"></i></a><a class="mini-action danger" href="{% url 'task_delete' t.pk %}" title="حذف"><i class="fa-solid fa-trash"></i></a></div>
+      </div>
+      {% empty %}<div class="empty-row"><i class="fa-solid fa-list-check"></i><span>هنوز وظیفه‌ای ثبت نشده است.</span><button class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#quickTask">اولین وظیفه</button></div>{% endfor %}
+    </div>
+  </div>
+
+  <div class="panel colorful-panel amber-panel mt-4"><div class="panel-head"><div><h3><i class="fa-solid fa-bars-staggered text-warning"></i> فهرست‌های پروژه</h3><small class="text-muted">وظایف را در فهرست‌های مستقل گروه‌بندی کنید.</small></div><a class="btn btn-sm btn-outline-primary" href="{% url 'task_list_create' project.pk %}"><i class="fa-solid fa-plus"></i> فهرست</a></div><div class="list-cards-v2">{% for l in task_lists %}<div class="list-card-v2"><div class="list-card-head"><div><span class="list-color l{{forloop.counter|add:'0'}}"></span><strong>{{l.title}}</strong></div><div class="row-actions"><a class="mini-action" href="{% url 'task_list_edit' l.pk %}" title="ویرایش"><i class="fa-solid fa-pen"></i></a><a class="mini-action danger" href="{% url 'task_list_delete' l.pk %}" title="حذف"><i class="fa-solid fa-trash"></i></a></div></div><div class="list-mini-tasks">{% for t in l.tasks.all|slice:':5' %}<a href="{% url 'task_detail' t.pk %}"><i class="fa-regular {% if t.status == 'done' %}fa-circle-check text-success{% else %}fa-circle{% endif %}"></i> {{t.title}}</a>{% empty %}<small class="text-muted">این فهرست خالی است.</small>{% endfor %}</div><a class="list-add-task" href="{% url 'task_create' project.pk %}"><i class="fa-solid fa-plus"></i> افزودن وظیفه</a></div>{% empty %}<div class="empty">فهرستی وجود ندارد.</div>{% endfor %}</div></div>
+</section>
+
+<aside class="project-side-column">
+  <div class="panel colorful-panel blue-panel"><div class="panel-head"><div><h3><i class="fa-solid fa-flag-checkered text-info"></i> نقاط عطف</h3><small class="text-muted">{{progress_stats.milestone_done|fa_num}} از {{progress_stats.milestone_total|fa_num}} تکمیل</small></div><a href="{% url 'milestone_create' project.pk %}"><i class="fa-solid fa-plus"></i></a></div>{% if progress_stats.milestone_total %}<div class="milestone-progress"><i style="width:{{progress_stats.milestone_percent}}%"></i></div>{% endif %}<div class="milestone-list-v2">{% for m in milestones %}<div class="milestone-v2"><form method="post" action="{% url 'milestone_toggle' m.pk %}" class="m-0">{% csrf_token %}<button class="milestone-check {% if m.is_done %}done{% endif %}" title="تغییر وضعیت نقطه عطف"><i class="fa-solid fa-check"></i></button></form><div class="flex-grow-1"><strong>{{m.title}}</strong><small>{{m.due_date|jalali_date|default:'بدون موعد'}}</small></div><div class="row-actions"><a class="mini-action" href="{% url 'milestone_edit' m.pk %}"><i class="fa-solid fa-pen"></i></a><form method="post" action="{% url 'milestone_delete' m.pk %}" onsubmit="return confirm('نقطه عطف حذف شود؟')">{% csrf_token %}<button class="mini-action danger"><i class="fa-solid fa-trash"></i></button></form></div></div>{% empty %}<div class="small text-muted">هنوز نقطه عطفی تعریف نشده.</div>{% endfor %}</div></div>
+
+  <div class="panel colorful-panel green-panel mt-4"><div class="panel-head"><h3><i class="fa-solid fa-users text-success"></i> تیم پروژه</h3><a href="{% url 'project_members' project.pk %}">مدیریت</a></div><div class="project-members-v2">{% for pm in members %}<div class="member-mini"><span class="avatar colorful-avatar">{{pm.workspace_member.name|slice:':1'}}</span><div><strong>{{pm.workspace_member.name}}</strong><small>{{pm.get_role_display}}</small></div>{% if pm.workspace_member.user_id != user.id and pm.workspace_member.user %}<a href="{% url 'private_start' project.pk pm.workspace_member.pk %}" title="چت خصوصی"><i class="fa-regular fa-comment"></i></a>{% endif %}</div>{% empty %}<small>عضوی نیست.</small>{% endfor %}</div></div>
+
+  <div class="panel colorful-panel pink-panel mt-4"><div class="panel-head"><h3><i class="fa-solid fa-clock-rotate-left text-danger"></i> مسیر پیشرفت</h3></div><div class="timeline">{% for a in activities|slice:':10' %}<div class="timeline-item"><span></span><div><strong>{{a.description}}</strong><small>{{a.created_at|jalali_datetime}}</small></div></div>{% empty %}<small class="text-muted">فعالیتی ثبت نشده.</small>{% endfor %}</div></div>
+</aside>
+</div>
+
+<div class="modal fade" id="startTimer" tabindex="-1"><div class="modal-dialog modal-dialog-centered"><div class="modal-content quick-modal colorful-modal"><form method="post" action="{% url 'timer_start' project.pk %}">{% csrf_token %}<input type="hidden" name="next" value="{{request.get_full_path}}"><div class="modal-header"><div><span class="modal-icon green"><i class="fa-solid fa-stopwatch"></i></span><h5 class="modal-title d-inline-block">شروع تایمر کاری</h5><small class="d-block mt-2">وظیفه اختیاری است؛ تایمر تا زمانی که «اتمام» را بزنید ادامه دارد.</small></div><button class="btn-close" type="button" data-bs-dismiss="modal"></button></div><div class="modal-body">{{timer_start_form.as_p}}</div><div class="modal-footer"><a href="{% url 'worklog_manual_add' project.pk %}?next={{request.get_full_path|urlencode}}" class="btn btn-light">ثبت دستی</a><button class="btn btn-success"><i class="fa-solid fa-play"></i> شروع تایمر</button></div></form></div></div></div>
+<div class="modal fade" id="quickTask" tabindex="-1"><div class="modal-dialog modal-dialog-centered"><div class="modal-content quick-modal colorful-modal"><form method="post" action="{% url 'task_quick_create' project.pk %}">{% csrf_token %}<div class="modal-header"><div><span class="modal-icon"><i class="fa-solid fa-bolt"></i></span><h5 class="modal-title d-inline-block">وظیفه سریع</h5><small class="d-block mt-2">عنوان را وارد کنید؛ مسئول و موعد اختیاری‌اند.</small></div><button class="btn-close" type="button" data-bs-dismiss="modal"></button></div><div class="modal-body">{{quick_task_form.as_p}}</div><div class="modal-footer"><a href="{% url 'task_create' project.pk %}" class="btn btn-light">فرم کامل</a><button class="btn btn-primary"><i class="fa-solid fa-plus"></i> افزودن وظیفه</button></div></form></div></div></div>
+{% endblock %}

@@ -1,0 +1,13 @@
+{% extends 'base.html' %}
+{% block title %}جستجو | کارما{% endblock %}
+{% block content %}
+<div class="page-head"><div><h1>جستجو</h1><p>{% if q %}نتایج برای «{{q}}»{% else %}عبارت موردنظر را در نوار جستجو وارد کنید.{% endif %}</p></div></div>
+{% if q %}
+<div class="search-results">
+  <section class="panel"><div class="panel-head"><h3>پروژه‌ها</h3><span>{{projects|length}}</span></div>{% for p in projects %}<a class="search-result" href="{% url 'project_detail' p.pk %}"><i class="fa-solid fa-diagram-project"></i><div><strong>{{p.name}}</strong><small>{{p.workspace.name}} · {{p.get_priority_display}}</small></div></a>{% empty %}<div class="empty">موردی یافت نشد.</div>{% endfor %}</section>
+  <section class="panel"><div class="panel-head"><h3>وظایف</h3><span>{{tasks|length}}</span></div>{% for t in tasks %}<a class="search-result" href="{% url 'task_detail' t.pk %}"><i class="fa-regular fa-circle-check"></i><div><strong>{{t.title}}</strong><small>{{t.project.name}}</small></div></a>{% empty %}<div class="empty">موردی یافت نشد.</div>{% endfor %}</section>
+  <section class="panel"><div class="panel-head"><h3>مستندات</h3><span>{{documents|length}}</span></div>{% for d in documents %}<a class="search-result" href="{% url 'documents' d.project.pk %}"><i class="fa-regular fa-file"></i><div><strong>{{d.title}}</strong><small>{{d.project.name}}</small></div></a>{% empty %}<div class="empty">موردی یافت نشد.</div>{% endfor %}</section>
+  <section class="panel"><div class="panel-head"><h3>نامه‌ها</h3><span>{{letters|length}}</span></div>{% for l in letters %}<a class="search-result" href="{% url 'letters' l.project.pk %}"><i class="fa-regular fa-envelope"></i><div><strong>{{l.subject}}</strong><small>{{l.number}} · {{l.project.name}}</small></div></a>{% empty %}<div class="empty">موردی یافت نشد.</div>{% endfor %}</section>
+</div>
+{% endif %}
+{% endblock %}

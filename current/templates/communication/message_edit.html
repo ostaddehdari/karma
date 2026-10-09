@@ -1,0 +1,10 @@
+{% extends 'base.html' %}{% block title %}ویرایش پیام | کارما{% endblock %}{% block content %}
+<div class="panel mx-auto" style="max-width:760px">
+  <div class="page-head mb-3"><div><div class="eyebrow">{{message.conversation.title}}</div><h1>ویرایش پیام</h1></div></div>
+  <form method="post">{% csrf_token %}
+    <textarea name="text" class="form-control" rows="6" placeholder="متن پیام...">{{message.text}}</textarea>
+    {% if message.attachments.exists %}<div class="alert alert-info mt-3">پیوست‌های پیام حفظ می‌شوند. برای حذف فایل، خود پیام را حذف و دوباره ارسال کنید.</div>{% endif %}
+    <div class="d-flex gap-2 mt-3"><a class="btn btn-light" href="{% url 'conversation' message.conversation_id %}">انصراف</a><button class="btn btn-primary">ذخیره تغییرات</button></div>
+  </form>
+</div>
+{% endblock %}
